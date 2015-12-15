@@ -1,0 +1,35 @@
+close all
+
+%% Pick corresponding points between the two images
+% input_dir = ['/Users/minhtrangvy/Documents/MATLAB/Computational_Photography/Face_Morphing/faces/'];
+% image1 = imread([input_dir '1.jpg']);
+% image2 = imread([input_dir '2.jpg']);
+% cpselect(image1,image2)
+load('corr_points_1_2')
+
+
+%% Compute Delaunay triangulation of the midway shape
+midway_shape(:,1) = (points1(:,1) + points2(:,1))/2;
+midway_shape(:,2) = (points1(:,2) + points2(:,2))/2;
+triangulation = delaunay(midway_shape(:,1),midway_shape(:,2));
+% Plot the triangles to see
+% trisurf(tri1,points1(:,1),points1(:,2),zeros(size(points1(:,2))))         
+
+%% Find the transformation matrix T for each triangle
+for i = 1:length(triangulation)
+    triangle_indices = triangulation(i,:);
+    corner1 = triangle_indices(1);
+    corner2 = triangle_indices(2);
+    corner3 = triangle_indices(3);
+    tri1(1,:) = points1(corner1,:);
+    tri1(2,:) = points1(corner2,:);
+    tri1(3,:) = points1(corner3
+end
+
+
+%% Compute midway face
+% Compute average shape with affine warping
+% Warp both faces to that shape
+% Average colors together
+
+%%

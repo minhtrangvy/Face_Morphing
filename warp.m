@@ -56,9 +56,12 @@ function I_target = warp(I_source,pts_source,pts_target,tri)
     % now tranform target pixels back to 
     % source image
     I_target = I_source;
-    Xsrc = ones(h,w);
+    I_target_copy = I_source;
+    Xsrc = zeros(size(Xtarg));
+    current_pixel = 0;
     for r = 1:h
         for c = 1:w
+            current_pixel = current_pixel+1;
             current_triangle = tindex_matrix(r,c);
             if ~isnan(current_triangle)
                 transformation_matrix = T(:,:,current_triangle);
@@ -67,57 +70,67 @@ function I_target = warp(I_source,pts_source,pts_target,tri)
                 current_source_coord = round(current_source_coord/current_source_coord(3));
                 x = current_source_coord(1);
                 y = current_source_coord(2);
-            
-                if (x > 0) && (x < w) && (y > 0) && (y < h)
-                    I_target(r,c) = I_source(x,y);
+
+                if (x > 0) && (x < h) && (y > 0) && (y < w)
+                    Xsrc(1,current_pixel) = x;
+                    Xsrc(2,current_pixel) = y;
+                    I_target_copy(r,c,:) = I_source(x,y,:);
                 else
-                    I_target(r,c) = I_source(r,c);
+                    Xsrc(1,current_pixel) = r;
+                    Xsrc(2,current_pixel) = c;
+                    I_target_copy(r,c,:) = I_source(r,c,:);
                 end                
             else
-                I_target(r,c) = I_source(r,c);
+                Xsrc(1,current_pixel) = r;
+                Xsrc(2,current_pixel) = c;
+                I_target_copy(r,c,:) = I_source(r,c,:);
             end
         end
     end
     
-%     for pixel=1:(h*w)
-%         targ_x = Xtarg(1,pixel);
-%         targ_y = Xtarg(2,pixel);
-%         
-%         if ~isnan(tindex(pixel))
-%             transformation_matrix = T(:,:,tindex(pixel));
-%             current_point = [Xtarg(1,pixel), Xtarg(2,pixel), 1]';
-%             current_source_coord = transformation_matrix * current_point;
-%             current_source_coord = round(current_source_coord/current_source_coord(3));
-%             x = current_source_coord(1);
-%             y = current_source_coord(2);
-%             
-%             if (x > 0) && (x < w) && (y > 0) && (y < h)
-%                 I_target(targ_x,targ_y) = I_source(x,y);
-%             else
-%                 I_target(targ_x,targ_y) = Xsrc(pixel);
-%             end
-%         else
-%             I_target(targ_x,targ_y) = Xsrc(pixel);
-%         end
-%     end
+%     figure
+%     imshow(I_target_copy)
+%     return
+%     
+%     % now we know where each point in the target
+%     % image came from in the source, we can interpolate
+%     % to figure out the colors
+    assert(size(I_source,3) == 3)  % we only are going to deal with color images
+    I_source = im2double(I_source);
+
+    R = I_source(:,:,1);
+    G = I_source(:,:,2);
+    B = I_source(:,:,3);
+
+X = Xtarg(1,:);
+Y = Xtarg(2,:);
+[X2,Y2] = meshgrid(1:w,1:h);
+size(X)
+size(X2)
+assert(X == X2)
+R_target = interp2(R,X2,Y2);
+figure
+imshow(R)
+figure
+imshow(R_target)
+return
+    R_target = interp2(R,Xsrc(1,:),Xsrc(2,:));
+    G_target = interp2(G,Xsrc(1,:),Xsrc(2,:));
+    B_target = interp2(B,Xsrc(1,:),Xsrc(2,:));
+
+    I_target(:,:,1) = reshape(R_target,h,w);
+    I_target(:,:,2) = reshape(G_target,h,w);
+    I_target(:,:,3) = reshape(B_target,h,w);
 
     figure
     imshow(I_source)
     title('source')
-    
+
     figure
     imshow(I_target)
     title('target')
-%     % now we know where each point in the target
-%     % image came from in the source, we can interpolate
-%     % to figure out the colors
-%     assert(size(I_source,3) == 3)  % we only are going to deal with color images
-% 
-%     R_target = interp2(I_source(:,:,1),Xsrc(1,:),Xsrc(2,:));
-%     G_target = interp2(I_source(:,:,2),Xsrc(1,:),Xsrc(2,:));
-%     B_target = interp2(I_source(:,:,3),Xsrc(1,:),Xsrc(2,:));
-% 
-%     I_target(:,:,1) = reshape(R_target,h,w);
-%     I_target(:,:,2) = reshape(G_target,h,w);
-%     I_target(:,:,3) = reshape(B_target,h,w);
+    
+    figure
+    imshow(I_target_copy)
+    title('directly setting pixel value')
 

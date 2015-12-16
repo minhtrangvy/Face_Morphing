@@ -1,9 +1,9 @@
 close all
 
 %% Pick corresponding points between the two images
-% input_dir = ['/Users/minhtrangvy/Documents/MATLAB/Computational_Photography/Face_Morphing/faces/'];
-% image1 = imread([input_dir '1.jpg']);
-% image2 = imread([input_dir '2.jpg']);
+input_dir = ['/Users/minhtrangvy/Documents/MATLAB/Computational_Photography/Face_Morphing/faces/'];
+image1 = imread([input_dir '1.jpg']);
+image2 = imread([input_dir '2.jpg']);
 % cpselect(image1,image2)
 load('corr_points_1_2')
 
@@ -17,7 +17,7 @@ tri = delaunay(midway_shape(:,1),midway_shape(:,2));
 for fnum = 1:1%61
     t = (fnum-1)/61;
     pts_target = (1-t)*points1 + t*points2;                % intermediate key-point locations
-    I1_warp = warp(image1,points1,pts_target,tri);              % warp image 1
+%     I1_warp = warp(image1,points1,pts_target,tri);              % warp image 1
     I2_warp = warp(image2,points2,pts_target,tri);               % warp image 2
 %     imwrite(I1_warp,sprintf('1.jpg',fnum),'jpg')
 %     imwrite(I2_warp,sprintf('2.jpg',fnum),'jpg')

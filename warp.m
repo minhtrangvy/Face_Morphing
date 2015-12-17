@@ -19,7 +19,7 @@ function I_target = warp(I_source,pts_source,pts_target,tri)
     %% coordinates of pixels in target image in 
     % homogenous coordinates.  we will assume 
     % target image is same size as source
-    [xx,yy] = meshgrid(1:w,1:h);
+    [xx,yy] = meshgrid(1:h,1:w);
     Xtarg = [xx(:) yy(:) ones(h*w,1)]';
     
     % for each triangle, compute tranformation which
@@ -40,13 +40,14 @@ function I_target = warp(I_source,pts_source,pts_target,tri)
                 pts_target(corner2,:);
                 pts_target(corner3,:)];
         % Add to matrix of all the transformation matrices
-        T(:,:,i) = tform(tri1,tri2);
+        T(:,:,i) = tform(tri2,tri1);
     end
     
     %% for each pixel in the target image, figure
     % out what triangle it lives in so we know 
     % what transformation to apply
     tindex = mytsearch(pts_target(:,1),pts_target(:,2),tri,Xtarg(1,:)', Xtarg(2,:)');
+    save('tindex','tindex');
     tindex_matrix = zeros(h,w);
     for row = 1:h
         start = 1+((row-1)*w);
@@ -59,43 +60,39 @@ function I_target = warp(I_source,pts_source,pts_target,tri)
     I_target = ones(size(I_source));
     Xsrc = zeros(h,w);
     Ysrc = zeros(h,w);
-    I_target_copy = ones(size(I_source));
+%     I_target_copy = ones(size(I_source));
     for r = 1:h
         for c = 1:w
             current_triangle = tindex_matrix(r,c);
+            
             if ~isnan(current_triangle)
+                
                 transformation_matrix = T(:,:,current_triangle);
+                
                 current_point = [r c 1]';
                 current_source_coord = transformation_matrix * current_point;
                 current_source_coord = round(current_source_coord/current_source_coord(3));
+                
                 x = current_source_coord(1);
                 y = current_source_coord(2);
-
-                if (x > 0) && (x < h) && (y > 0) && (y < w)
-                    Xsrc(r,c) = x;
-                    Ysrc(r,c) = y;
-%                     I_target_copy(r,c,:) = I_source(x,y,:);
-                else
-                    Xsrc(r,c) = r;
-                    Ysrc(r,c) = c;
-%                     I_target_copy(r,c,1) = interp2(I_source(:,:,1),r,c);
-%                     I_target_copy(r,c,2) = interp2(I_source(:,:,3),r,c);
-%                     I_target_copy(r,c,3) = interp2(I_source(:,:,3),r,c);
-                end                
+                
+%                 Xsrc(r,c) = 1;
+%                 Ysrc(r,c) = 1;
+                [Xsrc(r,c), Ysrc(r,c)] = check_pixels(x,y,h,w,r,c);
+%                 [Xsrc(r,c), Ysrc(r,c)] = check_pixels2(x,y,h,w);
             else
                 Xsrc(r,c) = r;
                 Ysrc(r,c) = c;
 %                 I_target_copy(r,c,1) = interp2(I_source(:,:,1),r,c);
-%                 I_target_copy(r,c,2) = interp2(I_source(:,:,2),r,c);
+%                 I_target_copy(r,c,2) = interp2(I_source(:,:,3),r,c);
 %                 I_target_copy(r,c,3) = interp2(I_source(:,:,3),r,c);
             end
         end
     end
-
-%     
-%     % now we know where each point in the target
-%     % image came from in the source, we can interpolate
-%     % to figure out the colors
+    
+    % now we know where each point in the target
+    % image came from in the source, we can interpolate
+    % to figure out the colors
     assert(size(I_source,3) == 3)  % we only are going to deal with color images
 
     R = I_source(:,:,1);
